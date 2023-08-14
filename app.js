@@ -5,6 +5,7 @@ const bodyparser = require("body-parser");
 
 const productsRouter = require("./api/routes/products");
 const ordersRouter = require("./api/routes/orders");
+const userRouter = require("./api/routes/users");
 
 mongoose.connect("mongodb+srv://nel:nel@cluster0.icsmgmt.mongodb.net/");
 
@@ -27,6 +28,7 @@ app.use((req, res, next) => {
 
 app.use("/products", productsRouter);
 app.use("/orders", ordersRouter);
+app.use("/users", userRouter);
 
 // app.use((req, res, next) => {
 //     res.status(200).json({
