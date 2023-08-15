@@ -1,10 +1,36 @@
 const express = require("express");
 const mongoose = require("mongoose");
+// multer is used to parse form-data type    
+const multer = require('multer');
+
+// multer will store all the incoming files
+// const upload = multer({ dest: "/uploads/" });
+
+// We want to define how we store the file and want to make sure to store certain types of file.
+// Implementing storage strategy
+// It's a more detailed way to store the file.
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // In callback, we want to pass the potential error and the path where to be stored. 
+        cb(null, './uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, new Date().toISOString() + file.filename);
+    }
+});
+
+// multer will store all the incoming files
+const upload = multer({ storage: storage });
+
+
 const Product = require("../models/product");
 
 const router = express.Router();
 
-router.post("/", (req, res, next) => {
+// We can pass as much as handlers we want through the request methods.
+// upload.single is a handler, that means we will get one file only. 
+router.post("/", upload.single('productImage'), (req, res, next) => {
+    console.log(req.file);
     const product = new Product({
         _id: new mongoose.Types.ObjectId(),
         title: req.body.title,
