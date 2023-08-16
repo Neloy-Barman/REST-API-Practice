@@ -85,7 +85,7 @@ exports.users_login = (req, res, next) => {
 };
 
 exports.users_delete_user = (req, res, next) => {
-    User.deleteOne({ email: req.params.userId }).exec().then(res => {
+    User.deleteOne({ _id: req.params.userId }).exec().then(res => {
         res.status(200).json({
             message: "User deleted"
         });
