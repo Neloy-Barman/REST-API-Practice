@@ -84,7 +84,7 @@ exports.orders_get_order = (req, res, next) => {
 
 exports.order_delete_order = (req, res, next) => {
     const id = req.params.orderId;
-    Order.findById({ _id: id })
+    Order.deleteOne({ _id: id })
         .select("_id product quantity")
         .populate("product") // Marging another table information with one
         .exec().then(result => {
@@ -94,7 +94,7 @@ exports.order_delete_order = (req, res, next) => {
                 });
             }
             res.status(200).json({
-                message: "Order fetched",
+                message: "Order deleted",
                 order: result,
                 request: {
                     type: "GET",
