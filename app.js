@@ -14,6 +14,9 @@ const app = express();
 
 app.use(morgan("dev"));
 
+// Making the uploads folder publicly available.
+app.use('/uploads', express.static('uploads'));
+
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(bodyparser.json());
 

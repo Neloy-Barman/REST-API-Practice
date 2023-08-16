@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 // multer is used to parse form-data type    
 const multer = require('multer');
 
+const checkAuth = require('../middleware/check-auth');
+
 // multer will store all the incoming files
 // const upload = multer({ dest: "/uploads/" });
 
@@ -12,16 +14,36 @@ const multer = require('multer');
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         // In callback, we want to pass the potential error and the path where to be stored. 
-        cb(null, './uploads/');
+        cb(null, './uploads');
     },
     filename: function (req, file, cb) {
-        cb(null, new Date().toISOString() + file.filename);
+        cb(null, file.originalname);
     }
 });
 
-// multer will store all the incoming files
-const upload = multer({ storage: storage });
 
+const fileFilter = (req, file, cb) => {
+    // To reject or accept the incoming file.
+    // We will be accessing file information to keep or discard
+
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+        // Accept
+        cb(null, true);
+    } else {
+        // Rejection
+        cb(new Error('Error occured'), false);
+    }
+
+};
+// multer will store all the incoming files
+const upload = multer({
+    storage: storage,
+    limits: {
+        fieldSize: 1024 * 1024 * 5
+        // Limiting the file size not to accept than this.
+    },
+    fileFilter: fileFilter
+});
 
 const Product = require("../models/product");
 
@@ -29,12 +51,13 @@ const router = express.Router();
 
 // We can pass as much as handlers we want through the request methods.
 // upload.single is a handler, that means we will get one file only. 
-router.post("/", upload.single('productImage'), (req, res, next) => {
+router.post("/", checkAuth, upload.single('productImage'), (req, res, next) => {
     console.log(req.file);
     const product = new Product({
         _id: new mongoose.Types.ObjectId(),
         title: req.body.title,
-        price: req.body.price
+        price: req.body.price,
+        productImage: req.file.path
     });
     product.save().then(response => {
         res.status(200).json({
@@ -42,7 +65,8 @@ router.post("/", upload.single('productImage'), (req, res, next) => {
             product: {
                 id: product._id,
                 title: product.title,
-                price: product.price
+                price: product.price,
+                productImage: product.productImage
             },
             request: {
                 type: "GET",
@@ -58,7 +82,7 @@ router.post("/", upload.single('productImage'), (req, res, next) => {
 
 
 router.get("/", (req, res, next) => {
-    Product.find().select("title price _id").exec().then(response => {
+    Product.find().select("title price _id productImage").exec().then(response => {
         res.status(200).json({
             message: "Products fetched",
             count: response.length,
@@ -72,7 +96,7 @@ router.get("/", (req, res, next) => {
 });
 
 
-router.get("/:productId", (req, res, next) => {
+router.get("/:productId", checkAuth, (req, res, next) => {
     const id = req.params.productId;
     Product.findById({ _id: id }).select("_id title price").exec().then(response => {
         res.status(200).json({
@@ -90,7 +114,7 @@ router.get("/:productId", (req, res, next) => {
     });
 });
 
-router.patch("/:productId", (req, res, next) => {
+router.patch("/:productId", checkAuth, (req, res, next) => {
     const id = req.params.productId;
     const updateOps = {};
     for (const ops of req.body) {
@@ -112,7 +136,7 @@ router.patch("/:productId", (req, res, next) => {
     });
 });
 
-router.delete("/:productId", (req, res, next) => {
+router.delete("/:productId", checkAuth, (req, res, next) => {
     const id = req.params.productId;
     Product.deleteOne({ _id: id },).exec().then(response => {
         res.status(200).json({
